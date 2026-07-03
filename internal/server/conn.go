@@ -124,6 +124,10 @@ func (c *conn) writeArray(n int, fn func(w *resp.Writer) error) error {
 	if err := c.w.WriteArrayHeader(n); err != nil {
 		return err
 	}
+	if fn == nil {
+		// An empty array (n == 0) has no elements to emit.
+		return nil
+	}
 	return fn(c.w)
 }
 

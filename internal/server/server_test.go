@@ -136,6 +136,30 @@ func TestWrongTypeOverWire(t *testing.T) {
 	}
 }
 
+// TestCommandDoesNotCrash guards against the nil-pointer panic where COMMAND
+// and COMMAND DOCS wrote an empty array with a nil callback (issue #1). redis-cli
+// issues COMMAND DOCS on connect, which previously killed the server.
+func TestCommandDoesNotCrash(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	// Plain COMMAND and COMMAND DOCS must reply with an (empty) array, not panic.
+	if r := mustDo(t, cli, "COMMAND"); r == nil {
+		t.Fatalf("COMMAND returned nil")
+	}
+	if r := mustDo(t, cli, "COMMAND", "DOCS"); r == nil {
+		t.Fatalf("COMMAND DOCS returned nil")
+	}
+	// COMMAND COUNT still returns the number of registered commands.
+	if r := mustDo(t, cli, "COMMAND", "COUNT"); r == int64(0) {
+		t.Fatalf("COMMAND COUNT = %v, want > 0", r)
+	}
+	// The server must still be alive and serving after those calls.
+	if r := mustDo(t, cli, "PING"); r != "PONG" {
+		t.Fatalf("PING after COMMAND = %v", r)
+	}
+}
+
 func TestAgentMemory(t *testing.T) {
 	cli, cleanup := startTestServer(t)
 	defer cleanup()

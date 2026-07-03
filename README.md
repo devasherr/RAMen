@@ -239,7 +239,7 @@ RAMen is free and open source, and it always will be. If it saves you time or yo
 
 <p align="center">
   <a href="https://wise.com/pay/business/rohitdebnath2?utm_source=open_link">
-    <img src="https://img.shields.io/badge/Support%20RAMen%20via%20Wise-9FE870?style=for-the-badge&logo=wise&logoColor=163300&labelColor=163300" alt="Support RAMen via Wise">
+    <img src="https://img.shields.io/badge/Support%20RAMen%20via%20Wise-9FE870?style=for-the-badge&logo=wise&logoColor=163300&labelColor=9FE870" alt="Support RAMen via Wise">
   </a>
 </p>
 

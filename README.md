@@ -235,7 +235,28 @@ Good first things to help with:
 - Add a missing Redis command.
 - Test RAMen with your favourite Redis client and tell us what worked.
 
-Please read the [Contributing Guide](CONTRIBUTING.md) to get started. If you are not sure where to begin, open an issue and say hi. Stars and shares also help a lot.
+Browse [good first issues](https://github.com/Rohit-Dnath/RAMen/contribute) to find something to pick up, then read the [Contributing Guide](CONTRIBUTING.md) to get started. If you are not sure where to begin, open an issue and say hi. Stars and shares also help a lot.
+
+## Contributors
+
+Thanks to these wonderful people who help make RAMen better.
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/Rohit-Dnath">
+        <img src="https://avatars.githubusercontent.com/u/136178612?v=4" width="80" height="80" style="border-radius:50%" alt="Rohit-Dnath"><br>
+        <sub><b>Rohit-Dnath</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/bayrambartu">
+        <img src="https://avatars.githubusercontent.com/u/113308882?v=4" width="80" height="80" style="border-radius:50%" alt="bayrambartu"><br>
+        <sub><b>bayrambartu</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
 
 ## License
 

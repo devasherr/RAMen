@@ -14,6 +14,14 @@
   <a href="https://wise.com/pay/business/rohitdebnath2?utm_source=open_link"><img src="https://img.shields.io/badge/support-RAMen-9FE870?logo=wise&logoColor=163300&labelColor=163300" alt="Support RAMen"></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/Rohit-Dnath/RAMen/stargazers"><img src="https://img.shields.io/github/stars/Rohit-Dnath/RAMen?style=social" alt="stars"></a>
+  <a href="https://github.com/Rohit-Dnath/RAMen/labels/good%20first%20issue"><img src="https://img.shields.io/github/issues/Rohit-Dnath/RAMen/good%20first%20issue?color=7057ff&label=good%20first%20issues" alt="good first issues"></a>
+  <a href="https://github.com/Rohit-Dnath/RAMen/issues"><img src="https://img.shields.io/github/issues/Rohit-Dnath/RAMen?color=008672" alt="open issues"></a>
+  <a href="https://github.com/Rohit-Dnath/RAMen/graphs/contributors"><img src="https://img.shields.io/github/contributors/Rohit-Dnath/RAMen?color=orange" alt="contributors"></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen" alt="PRs welcome"></a>
+</p>
+
 RAMen is a fast in-memory data store, like Redis, but built for AI apps and AI agents.
 
 It does three things:
@@ -248,7 +256,17 @@ Good first things to help with:
 - Add a missing Redis command.
 - Test RAMen with your favourite Redis client and tell us what worked.
 
-Browse [good first issues](https://github.com/Rohit-Dnath/RAMen/contribute) to find something to pick up, then read the [Contributing Guide](CONTRIBUTING.md) to get started. If you are not sure where to begin, open an issue and say hi. Stars and shares also help a lot.
+### Good first issues
+
+New here? These are small, self-contained, and well described. Pick one, comment to claim it, and you are off.
+
+- [**Good first issues**](https://github.com/Rohit-Dnath/RAMen/labels/good%20first%20issue) beginner-friendly, clearly scoped tasks.
+- [**Help wanted**](https://github.com/Rohit-Dnath/RAMen/labels/help%20wanted) things we would love a hand with.
+- [**All open issues**](https://github.com/Rohit-Dnath/RAMen/issues) the full list.
+
+Most open issues are missing Redis commands with the exact files and acceptance criteria already written down, so you can follow an existing handler as a template and open a PR the same day.
+
+Then read the [Contributing Guide](CONTRIBUTING.md) to get started. If you are not sure where to begin, open an issue and say hi. Stars and shares also help a lot.
 
 ## Contributors
 

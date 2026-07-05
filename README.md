@@ -298,6 +298,10 @@ Thanks to these wonderful people who help make RAMen better.
   </tr>
 </table>
 
+## Star History
+
+![alt text](star-history-202675.png)
+
 ## License
 
 [BSD-3-Clause](LICENSE). This is the same license family Redis used before 2024, and the one Valkey uses. Simple and permissive, no surprises.

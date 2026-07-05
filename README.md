@@ -288,6 +288,13 @@ Thanks to these wonderful people who help make RAMen better.
         <img src="https://img.shields.io/badge/Contributor-495057?style=for-the-badge&labelColor=495057" alt="Contributor">
       </a>
     </td>
+    <td align="center">
+      <a href="https://github.com/tchalikanti1705">
+        <img src="https://avatars.githubusercontent.com/u/198486914?v=4" width="80" height="80" style="border-radius:50%" alt="tchalikanti1705"><br>
+        <sub><b>tchalikanti1705</b></sub><br>
+        <img src="https://img.shields.io/badge/Contributor-495057?style=for-the-badge&labelColor=495057" alt="Contributor">
+      </a>
+    </td>
   </tr>
 </table>
 

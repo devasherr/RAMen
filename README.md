@@ -300,7 +300,11 @@ Thanks to these wonderful people who help make RAMen better.
 
 ## Star History
 
-![alt text](star-history-202675.png)
+<p align="center">
+  <a href="https://www.star-history.com/#Rohit-Dnath/RAMen&Date">
+    <img src="docs/star-history-202675.png" alt="RAMen Star History Chart" width="80%">
+  </a>
+</p>
 
 ## License
 

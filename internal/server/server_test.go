@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"math"
 	"net"
+	"strconv"
 	"testing"
 	"time"
 
@@ -53,6 +55,19 @@ func mustDo(t *testing.T, cli *client.Client, args ...string) any {
 	return r
 }
 
+func mustError(t *testing.T, cli *client.Client, args ...string) error {
+	t.Helper()
+	r, err := cli.Do(args...)
+	if err != nil {
+		t.Fatalf("%v: %v", args, err)
+	}
+	e, ok := r.(error)
+	if !ok {
+		t.Fatalf("%v: expected server error, got %v", args, r)
+	}
+	return e
+}
+
 func TestCoreCommands(t *testing.T) {
 	cli, cleanup := startTestServer(t)
 	defer cleanup()
@@ -96,6 +111,43 @@ func TestDataStructures(t *testing.T) {
 		t.Fatalf("HGET = %v", r)
 	}
 
+	if r := mustDo(t, cli, "HSETNX", "h", "f3", "v3"); r != int64(1) {
+		t.Fatalf("HSETNX new = %v", r)
+	}
+	if r := mustDo(t, cli, "HSETNX", "h", "f3", "v4"); r != int64(0) {
+		t.Fatalf("HSETNX existing = %v", r)
+	}
+	if r := mustDo(t, cli, "HGET", "h", "f3"); r != "v3" {
+		t.Fatalf("HSETNX overwrote existing field: %v", r)
+	}
+	if r := mustDo(t, cli, "HSETNX", "h", "", ""); r != int64(1) {
+		t.Fatalf("HSETNX empty field/value = %v", r)
+	}
+	if r := mustDo(t, cli, "HGET", "h", ""); r != "" {
+		t.Fatalf("HGET empty field = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBY", "h", "count", "5"); r != int64(5) {
+		t.Fatalf("HINCRBY create = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBY", "h", "count", "-2"); r != int64(3) {
+		t.Fatalf("HINCRBY existing = %v", r)
+	}
+	if r := mustDo(t, cli, "HGET", "h", "count"); r != "3" {
+		t.Fatalf("HGET after HINCRBY = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBYFLOAT", "h", "score", "1.5"); r != "1.5" {
+		t.Fatalf("HINCRBYFLOAT create = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBYFLOAT", "h", "score", "2.25"); r != "3.75" {
+		t.Fatalf("HINCRBYFLOAT existing = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBYFLOAT", "h", "score", "-3.75"); r != "0" {
+		t.Fatalf("HINCRBYFLOAT zero normalization = %v", r)
+	}
+	if r := mustDo(t, cli, "HINCRBYFLOAT", "h", "whole", "5"); r != "5" {
+		t.Fatalf("HINCRBYFLOAT integer-valued = %v", r)
+	}
+
 	mustDo(t, cli, "SADD", "s", "x", "y", "x")
 	if r := mustDo(t, cli, "SCARD", "s"); r != int64(2) {
 		t.Fatalf("SCARD = %v", r)
@@ -106,6 +158,73 @@ func TestDataStructures(t *testing.T) {
 	if len(zr) != 2 || zr[0] != "one" || zr[1] != "two" {
 		t.Fatalf("ZRANGE = %v", zr)
 	}
+}
+
+func TestHashSetNXErrors(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	mustError(t, cli, "HSETNX", "h", "field")
+	mustDo(t, cli, "SET", "str", "value")
+	mustError(t, cli, "HSETNX", "str", "field", "value")
+}
+
+func TestHashIncrByErrors(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	mustError(t, cli, "HINCRBY", "h", "field")
+	mustError(t, cli, "HINCRBY", "h", "field", "not-an-int")
+	mustError(t, cli, "HINCRBY", "h", "field", "9223372036854775808")
+
+	mustDo(t, cli, "HSET", "h", "bad", "abc")
+	mustError(t, cli, "HINCRBY", "h", "bad", "1")
+	if r := mustDo(t, cli, "HGET", "h", "bad"); r != "abc" {
+		t.Fatalf("HINCRBY changed bad field = %v", r)
+	}
+
+	max := strconv.FormatInt(math.MaxInt64, 10)
+	mustDo(t, cli, "HSET", "h", "max", max)
+	mustError(t, cli, "HINCRBY", "h", "max", "1")
+	if r := mustDo(t, cli, "HGET", "h", "max"); r != max {
+		t.Fatalf("HINCRBY changed overflow field = %v", r)
+	}
+
+	min := strconv.FormatInt(math.MinInt64, 10)
+	mustDo(t, cli, "HSET", "h", "min", min)
+	mustError(t, cli, "HINCRBY", "h", "min", "-1")
+	if r := mustDo(t, cli, "HGET", "h", "min"); r != min {
+		t.Fatalf("HINCRBY changed underflow field = %v", r)
+	}
+
+	mustDo(t, cli, "SET", "str", "value")
+	mustError(t, cli, "HINCRBY", "str", "field", "1")
+}
+
+func TestHashIncrByFloatErrors(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	mustError(t, cli, "HINCRBYFLOAT", "h", "field")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "field", "not-a-float")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "field", "NaN")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "field", "+Inf")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "field", "1e309")
+
+	mustDo(t, cli, "HSET", "h", "bad", "abc")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "bad", "1")
+	if r := mustDo(t, cli, "HGET", "h", "bad"); r != "abc" {
+		t.Fatalf("HINCRBYFLOAT changed bad field = %v", r)
+	}
+
+	mustDo(t, cli, "HSET", "h", "huge", "1e308")
+	mustError(t, cli, "HINCRBYFLOAT", "h", "huge", "1e308")
+	if r := mustDo(t, cli, "HGET", "h", "huge"); r != "1e308" {
+		t.Fatalf("HINCRBYFLOAT changed overflow field = %v", r)
+	}
+
+	mustDo(t, cli, "SET", "str", "value")
+	mustError(t, cli, "HINCRBYFLOAT", "str", "field", "1.5")
 }
 
 func TestVectorCommands(t *testing.T) {

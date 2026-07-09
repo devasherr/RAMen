@@ -194,6 +194,10 @@ Open http://localhost:8080 in your browser while RAMen is running. You will see 
 | Best raw speed on one node | Good | Best | Best |
 | License | BSD-3-Clause | AGPL / RSAL (since 2024) | BSD-3-Clause |
 
+## Benchmarking
+
+- [Benchmarking Guide](docs/benchmarking.md)
+
 ## Configuration
 
 Every flag also has a `RAMEN_*` environment variable.

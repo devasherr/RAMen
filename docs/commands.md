@@ -64,7 +64,7 @@ HGETALL user:1
 
 ## Lists
 
-`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LLEN`, `LINDEX`, `LRANGE`, `LSET`, `LREM`.
+`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LLEN`, `LINDEX`, `LRANGE`, `LSET`, `LREM`, `LTRIM`.
 
 ```
 RPUSH q a b c
@@ -72,6 +72,7 @@ LRANGE q 0 -1          # a b c
 LPOP q                 # a
 LSET q 0 A             # overwrite index 0 (errors if the key or index is missing)
 LREM q 1 A             # remove up to 1 "A" from the head; -1 would start at the tail, 0 removes all
+LTRIM q 0 1            # keep only indexes 0..1, drop the rest
 ```
 
 ## Sets

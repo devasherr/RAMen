@@ -298,3 +298,46 @@ func TestListRem(t *testing.T) {
 		t.Fatalf("LRem wrong type = %v", err)
 	}
 }
+
+func TestListTrim(t *testing.T) {
+	s := New()
+	if err := s.LTrim("nope", 0, -1); err != nil {
+		t.Fatalf("LTrim missing key = %v", err)
+	}
+
+	s.RPush("l", "a", "b", "c", "d", "e")
+	if err := s.LTrim("l", 1, 3); err != nil {
+		t.Fatalf("LTrim = %v", err)
+	}
+	if got, _ := s.LRange("l", 0, -1); strings.Join(got, ",") != "b,c,d" {
+		t.Fatalf("LTrim result = %v", got)
+	}
+
+	s.RPush("neg", "a", "b", "c", "d", "e")
+	s.LTrim("neg", -3, -1)
+	if got, _ := s.LRange("neg", 0, -1); strings.Join(got, ",") != "c,d,e" {
+		t.Fatalf("LTrim negative indices = %v", got)
+	}
+
+	s.RPush("clamp", "a", "b", "c")
+	s.LTrim("clamp", -100, 100)
+	if got, _ := s.LRange("clamp", 0, -1); strings.Join(got, ",") != "a,b,c" {
+		t.Fatalf("LTrim clamp = %v", got)
+	}
+
+	s.RPush("past", "a", "b", "c")
+	s.LTrim("past", 5, 10)
+	if s.Exists("past") != 0 {
+		t.Fatalf("LTrim start past the end did not drop the key")
+	}
+	s.RPush("rev", "a", "b", "c")
+	s.LTrim("rev", 2, 1)
+	if s.Exists("rev") != 0 {
+		t.Fatalf("LTrim start>stop did not drop the key")
+	}
+
+	s.Set("str", "v", SetOptions{})
+	if err := s.LTrim("str", 0, -1); err != ErrWrongType {
+		t.Fatalf("LTrim wrong type = %v", err)
+	}
+}

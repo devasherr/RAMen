@@ -270,6 +270,27 @@ func TestListRem(t *testing.T) {
 	mustError(t, cli, "LREM", "str", "0", "x") // wrong type
 }
 
+func TestListTrim(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	if r := mustDo(t, cli, "LTRIM", "nope", "0", "-1"); r != "OK" {
+		t.Fatalf("LTRIM missing key = %v", r)
+	}
+	mustDo(t, cli, "RPUSH", "l", "a", "b", "c", "d", "e")
+	if r := mustDo(t, cli, "LTRIM", "l", "1", "3"); r != "OK" {
+		t.Fatalf("LTRIM = %v", r)
+	}
+	rr := mustDo(t, cli, "LRANGE", "l", "0", "-1").([]any)
+	if len(rr) != 3 || rr[0] != "b" || rr[2] != "d" {
+		t.Fatalf("LTRIM result = %v", rr)
+	}
+	mustError(t, cli, "LTRIM", "l", "x", "3") // bad index
+	mustError(t, cli, "LTRIM", "l", "1")      // arity
+	mustDo(t, cli, "SET", "str", "v")
+	mustError(t, cli, "LTRIM", "str", "0", "-1") // wrong type
+}
+
 func TestVectorCommands(t *testing.T) {
 	cli, cleanup := startTestServer(t)
 	defer cleanup()

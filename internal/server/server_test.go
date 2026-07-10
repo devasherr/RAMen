@@ -91,6 +91,15 @@ func TestCoreCommands(t *testing.T) {
 	if r, _ := cli.Do("GET", "foo"); r != nil {
 		t.Fatalf("GET after DEL = %v", r)
 	}
+	mustDo(t, cli, "SET", "src", "value")
+	mustError(t, cli, "COPY", "src1", "dst")
+	if r := mustDo(t, cli, "COPY", "src", "dst"); r != "1" {
+		t.Fatalf("COPY = %v", r)
+	}
+	mustError(t, cli, "COPY", "src", "dst")
+	if r := mustDo(t, cli, "COPY", "src", "dst", "REPLACE"); r != "1" {
+		t.Fatalf("COPY with REPLACE = %v", r)
+	}
 }
 
 func TestDataStructures(t *testing.T) {

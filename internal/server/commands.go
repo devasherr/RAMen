@@ -43,6 +43,7 @@ func (s *Server) registerCommands() {
 		"TYPE":       (*conn).cmdType,
 
 		// strings
+<<<<<<< HEAD
 		"GET":         (*conn).cmdGet,
 		"SET":         (*conn).cmdSet,
 		"SETNX":       (*conn).cmdSetNX,
@@ -60,6 +61,7 @@ func (s *Server) registerCommands() {
 		"INCRBYFLOAT": (*conn).cmdIncrByFloat,
 		"MGET":        (*conn).cmdMGet,
 		"MSET":        (*conn).cmdMSet,
+		"COPY":     (*conn).cmdCopy,
 
 		// hashes
 		"HSET":         (*conn).cmdHSet,

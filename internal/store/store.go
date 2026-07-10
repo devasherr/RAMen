@@ -209,6 +209,22 @@ func (s *Store) TTL(key string) (d time.Duration, hasTTL, ok bool) {
 	return time.Until(e.expireAt), true, true
 }
 
+// ExpireTime returns the absolute expiry deadline for key. ok is false when the
+// key does not exist; hasTTL is false when the key exists but is persistent.
+func (s *Store) ExpireTime(key string) (at time.Time, hasTTL, ok bool) {
+	sh := s.shardFor(key)
+	sh.mu.RLock()
+	defer sh.mu.RUnlock()
+	e, found := sh.peekLive(key, s.now())
+	if !found {
+		return time.Time{}, false, false
+	}
+	if e.expireAt.IsZero() {
+		return time.Time{}, false, true
+	}
+	return e.expireAt, true, true
+}
+
 // Keys returns every live key matching the glob-style pattern.
 func (s *Store) Keys(pattern string) []string {
 	now := s.now()

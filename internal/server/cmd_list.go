@@ -94,3 +94,17 @@ func (c *conn) cmdLRange(args []string) error {
 	}
 	return c.writeStringArray(items)
 }
+
+func (c *conn) cmdLSet(args []string) error {
+	if len(args) != 4 {
+		return c.wrongArgs("lset")
+	}
+	idx, err := strconv.Atoi(args[2])
+	if err != nil {
+		return c.writeError("ERR value is not an integer or out of range")
+	}
+	if err := c.s.store.LSet(args[1], idx, args[3]); err != nil {
+		return c.storeErr(err)
+	}
+	return c.writeSimple("OK")
+}

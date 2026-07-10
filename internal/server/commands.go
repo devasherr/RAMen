@@ -76,6 +76,7 @@ func (s *Server) registerCommands() {
 		"LLEN":   (*conn).cmdLLen,
 		"LINDEX": (*conn).cmdLIndex,
 		"LRANGE": (*conn).cmdLRange,
+		"LSET":   (*conn).cmdLSet,
 
 		// sets
 		"SADD":      (*conn).cmdSAdd,

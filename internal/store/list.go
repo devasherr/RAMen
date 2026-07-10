@@ -1,5 +1,13 @@
 package store
 
+import "errors"
+
+// ErrNoSuchKey mirrors Redis' "no such key", returned by LSET on a missing key.
+var ErrNoSuchKey = errors.New("ERR no such key")
+
+// ErrIndexOutOfRange mirrors Redis' LSET error for an index outside the list.
+var ErrIndexOutOfRange = errors.New("ERR index out of range")
+
 // list is RAMen's list type. A slice is sufficient for V1's basic ops; the
 // PRD scopes lists to LPUSH/RPUSH/LRANGE/etc. only.
 type list struct {
@@ -124,6 +132,31 @@ func (s *Store) LIndex(key string, idx int) (string, bool, error) {
 		return "", false, nil
 	}
 	return l.items[i], true, nil
+}
+
+// LSet overwrites the element at index (negative counts from the tail) with
+// value. It errors if the key is missing or the index is out of range.
+func (s *Store) LSet(key string, idx int, value string) error {
+	sh := s.shardFor(key)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	e, found := sh.getLive(key, s.now())
+	if !found {
+		return ErrNoSuchKey
+	}
+	l, err := asList(e)
+	if err != nil {
+		return err
+	}
+	i := idx
+	if i < 0 {
+		i += len(l.items)
+	}
+	if i < 0 || i >= len(l.items) {
+		return ErrIndexOutOfRange
+	}
+	l.items[i] = value
+	return nil
 }
 
 // LRange returns the elements in the inclusive index range [start, stop],

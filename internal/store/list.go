@@ -234,6 +234,39 @@ func (s *Store) LTrim(key string, start, stop int) error {
 	return nil
 }
 
+// LInsert inserts value before or after the first element equal to pivot. It
+// returns the new length, 0 when the key is missing, or -1 when pivot is absent.
+func (s *Store) LInsert(key string, before bool, pivot, value string) (int, error) {
+	sh := s.shardFor(key)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	e, found := sh.getLive(key, s.now())
+	if !found {
+		return 0, nil
+	}
+	l, err := asList(e)
+	if err != nil {
+		return 0, err
+	}
+	pos := -1
+	for i, v := range l.items {
+		if v == pivot {
+			pos = i
+			break
+		}
+	}
+	if pos < 0 {
+		return -1, nil
+	}
+	if !before {
+		pos++
+	}
+	l.items = append(l.items, "")
+	copy(l.items[pos+1:], l.items[pos:])
+	l.items[pos] = value
+	return len(l.items), nil
+}
+
 // LRange returns the elements in the inclusive index range [start, stop],
 // where negative indices count from the tail (Redis semantics).
 func (s *Store) LRange(key string, start, stop int) ([]string, error) {

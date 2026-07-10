@@ -209,6 +209,31 @@ func (s *Store) LRem(key string, count int, value string) (int, error) {
 	return removed, nil
 }
 
+// LTrim keeps only the elements in the inclusive range [start, stop], with
+// Redis-style negative indices, and drops the key when the range is empty.
+func (s *Store) LTrim(key string, start, stop int) error {
+	sh := s.shardFor(key)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	e, found := sh.getLive(key, s.now())
+	if !found {
+		return nil
+	}
+	l, err := asList(e)
+	if err != nil {
+		return err
+	}
+	start, stop = normalizeRange(start, stop, len(l.items))
+	if start > stop {
+		delete(sh.m, key)
+		return nil
+	}
+	kept := make([]string, stop-start+1)
+	copy(kept, l.items[start:stop+1])
+	l.items = kept
+	return nil
+}
+
 // LRange returns the elements in the inclusive index range [start, stop],
 // where negative indices count from the tail (Redis semantics).
 func (s *Store) LRange(key string, start, stop int) ([]string, error) {

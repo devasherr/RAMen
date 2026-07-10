@@ -425,6 +425,14 @@ func TestExpireAt(t *testing.T) {
 	mustError(t, cli, "EXPIREAT", "k")             // arity
 	mustError(t, cli, "EXPIREAT", "k", "notanint") // bad timestamp
 	mustError(t, cli, "PEXPIREAT", "pk", "notanint")
+
+	// a timestamp so large it would overflow time.Unix must be rejected, not
+	// silently delete the key
+	mustDo(t, cli, "SET", "keep", "v")
+	mustError(t, cli, "EXPIREAT", "keep", "9223372036854775807")
+	if r := mustDo(t, cli, "EXISTS", "keep"); r != int64(1) {
+		t.Fatalf("EXPIREAT overflow deleted the key = %v", r)
+	}
 }
 
 func TestExpireTime(t *testing.T) {

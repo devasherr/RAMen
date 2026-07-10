@@ -256,6 +256,11 @@ func (c *conn) cmdPExpire(args []string) error {
 func (c *conn) cmdExpireAt(args []string) error  { return c.expireAt(args, "expireat", false) }
 func (c *conn) cmdPExpireAt(args []string) error { return c.expireAt(args, "pexpireat", true) }
 
+// maxExpireSeconds mirrors Redis' LLONG_MAX/1000 cap on an absolute second
+// timestamp. A larger value would overflow time.Unix and wrap into the past,
+// which would silently delete the key instead of setting a deadline.
+const maxExpireSeconds = 9223372036854775
+
 // expireAt sets an absolute deadline from a Unix timestamp given in seconds, or
 // milliseconds when ms is true.
 func (c *conn) expireAt(args []string, name string, ms bool) error {
@@ -266,9 +271,14 @@ func (c *conn) expireAt(args []string, name string, ms bool) error {
 	if err != nil {
 		return c.writeError(store.ErrNotInteger.Error())
 	}
-	at := time.Unix(ts, 0)
+	var at time.Time
 	if ms {
 		at = time.UnixMilli(ts)
+	} else {
+		if ts > maxExpireSeconds || ts < -maxExpireSeconds {
+			return c.writeError("ERR invalid expire time in '" + name + "' command")
+		}
+		at = time.Unix(ts, 0)
 	}
 	ok := c.s.store.ExpireAt(args[1], at)
 	return c.writeInt(boolToInt(ok))

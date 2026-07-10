@@ -108,3 +108,18 @@ func (c *conn) cmdLSet(args []string) error {
 	}
 	return c.writeSimple("OK")
 }
+
+func (c *conn) cmdLRem(args []string) error {
+	if len(args) != 4 {
+		return c.wrongArgs("lrem")
+	}
+	count, err := strconv.Atoi(args[2])
+	if err != nil {
+		return c.writeError("ERR value is not an integer or out of range")
+	}
+	n, err := c.s.store.LRem(args[1], count, args[3])
+	if err != nil {
+		return c.storeErr(err)
+	}
+	return c.writeInt(int64(n))
+}

@@ -220,6 +220,26 @@ func TestExpireAt(t *testing.T) {
 	}
 }
 
+func TestExpireTime(t *testing.T) {
+	s := New()
+	cur := time.Unix(1000, 0)
+	s.now = func() time.Time { return cur }
+
+	if _, _, ok := s.ExpireTime("nope"); ok {
+		t.Fatal("ExpireTime on a missing key should be ok=false")
+	}
+
+	s.Set("k", "v", SetOptions{})
+	if _, hasTTL, ok := s.ExpireTime("k"); !ok || hasTTL {
+		t.Fatalf("ExpireTime without a TTL = hasTTL=%v ok=%v", hasTTL, ok)
+	}
+
+	s.ExpireAt("k", time.Unix(5000, 0))
+	if at, hasTTL, ok := s.ExpireTime("k"); !ok || !hasTTL || at.Unix() != 5000 {
+		t.Fatalf("ExpireTime = %d hasTTL=%v ok=%v", at.Unix(), hasTTL, ok)
+	}
+}
+
 func TestSnapshotRoundtrip(t *testing.T) {
 	s := New()
 	s.Set("str", "hello", SetOptions{})

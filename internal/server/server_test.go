@@ -426,3 +426,30 @@ func TestExpireAt(t *testing.T) {
 	mustError(t, cli, "EXPIREAT", "k", "notanint") // bad timestamp
 	mustError(t, cli, "PEXPIREAT", "pk", "notanint")
 }
+
+func TestExpireTime(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	if r := mustDo(t, cli, "EXPIRETIME", "nope"); r != int64(-2) {
+		t.Fatalf("EXPIRETIME missing key = %v", r)
+	}
+
+	mustDo(t, cli, "SET", "k", "v")
+	if r := mustDo(t, cli, "EXPIRETIME", "k"); r != int64(-1) {
+		t.Fatalf("EXPIRETIME without a TTL = %v", r)
+	}
+	mustDo(t, cli, "EXPIREAT", "k", "99999999999")
+	if r := mustDo(t, cli, "EXPIRETIME", "k"); r != int64(99999999999) {
+		t.Fatalf("EXPIRETIME after EXPIREAT = %v", r)
+	}
+
+	mustDo(t, cli, "SET", "pk", "v")
+	mustDo(t, cli, "PEXPIREAT", "pk", "99999999999000")
+	if r := mustDo(t, cli, "EXPIRETIME", "pk"); r != int64(99999999999) {
+		t.Fatalf("EXPIRETIME after PEXPIREAT (ms -> seconds) = %v", r)
+	}
+
+	mustError(t, cli, "EXPIRETIME")           // arity: no key
+	mustError(t, cli, "EXPIRETIME", "k", "x") // arity: too many
+}

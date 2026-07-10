@@ -29,15 +29,17 @@ func (s *Server) registerCommands() {
 		"BGSAVE":   (*conn).cmdSave,
 
 		// generic keyspace
-		"DEL":     (*conn).cmdDel,
-		"EXISTS":  (*conn).cmdExists,
-		"EXPIRE":  (*conn).cmdExpire,
-		"PEXPIRE": (*conn).cmdPExpire,
-		"TTL":     (*conn).cmdTTL,
-		"PTTL":    (*conn).cmdPTTL,
-		"PERSIST": (*conn).cmdPersist,
-		"KEYS":    (*conn).cmdKeys,
-		"TYPE":    (*conn).cmdType,
+		"DEL":       (*conn).cmdDel,
+		"EXISTS":    (*conn).cmdExists,
+		"EXPIRE":    (*conn).cmdExpire,
+		"PEXPIRE":   (*conn).cmdPExpire,
+		"EXPIREAT":  (*conn).cmdExpireAt,
+		"PEXPIREAT": (*conn).cmdPExpireAt,
+		"TTL":       (*conn).cmdTTL,
+		"PTTL":      (*conn).cmdPTTL,
+		"PERSIST":   (*conn).cmdPersist,
+		"KEYS":      (*conn).cmdKeys,
+		"TYPE":      (*conn).cmdType,
 
 		// strings
 		"GET":      (*conn).cmdGet,
@@ -247,6 +249,27 @@ func (c *conn) cmdPExpire(args []string) error {
 		return c.writeError(store.ErrNotInteger.Error())
 	}
 	ok := c.s.store.Expire(args[1], time.Duration(ms)*time.Millisecond)
+	return c.writeInt(boolToInt(ok))
+}
+
+func (c *conn) cmdExpireAt(args []string) error  { return c.expireAt(args, "expireat", false) }
+func (c *conn) cmdPExpireAt(args []string) error { return c.expireAt(args, "pexpireat", true) }
+
+// expireAt sets an absolute deadline from a Unix timestamp given in seconds, or
+// milliseconds when ms is true.
+func (c *conn) expireAt(args []string, name string, ms bool) error {
+	if len(args) != 3 {
+		return c.wrongArgs(name)
+	}
+	ts, err := strconv.ParseInt(args[2], 10, 64)
+	if err != nil {
+		return c.writeError(store.ErrNotInteger.Error())
+	}
+	at := time.Unix(ts, 0)
+	if ms {
+		at = time.UnixMilli(ts)
+	}
+	ok := c.s.store.ExpireAt(args[1], at)
 	return c.writeInt(boolToInt(ok))
 }
 

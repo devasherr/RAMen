@@ -161,6 +161,25 @@ func (s *Store) Expire(key string, ttl time.Duration) bool {
 	return true
 }
 
+// ExpireAt sets an absolute expiry deadline on an existing key. A deadline that
+// is already in the past deletes the key right away, matching Redis. It reports
+// whether the key existed.
+func (s *Store) ExpireAt(key string, at time.Time) bool {
+	sh := s.shardFor(key)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	e, ok := sh.getLive(key, s.now())
+	if !ok {
+		return false
+	}
+	if !at.After(s.now()) {
+		delete(sh.m, key)
+		return true
+	}
+	e.expireAt = at
+	return true
+}
+
 // Persist removes any TTL from key, returning whether a TTL was removed.
 func (s *Store) Persist(key string) bool {
 	sh := s.shardFor(key)

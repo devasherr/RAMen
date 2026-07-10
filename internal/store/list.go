@@ -159,6 +159,56 @@ func (s *Store) LSet(key string, idx int, value string) error {
 	return nil
 }
 
+// LRem removes elements equal to value: count>0 walks head->tail, count<0 walks
+// tail->head, count==0 removes every match. It returns how many were removed and
+// drops the key when the list becomes empty.
+func (s *Store) LRem(key string, count int, value string) (int, error) {
+	sh := s.shardFor(key)
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	e, found := sh.getLive(key, s.now())
+	if !found {
+		return 0, nil
+	}
+	l, err := asList(e)
+	if err != nil {
+		return 0, err
+	}
+	removed := 0
+	out := make([]string, 0, len(l.items))
+	if count < 0 {
+		// walk from the tail, dropping up to -count matches
+		limit := -count
+		remove := make([]bool, len(l.items))
+		for i := len(l.items) - 1; i >= 0; i-- {
+			if l.items[i] == value && removed < limit {
+				remove[i] = true
+				removed++
+			}
+		}
+		for i, v := range l.items {
+			if !remove[i] {
+				out = append(out, v)
+			}
+		}
+	} else {
+		// walk from the head; count==0 means no limit
+		for _, v := range l.items {
+			if v == value && (count == 0 || removed < count) {
+				removed++
+				continue
+			}
+			out = append(out, v)
+		}
+	}
+	if len(out) == 0 {
+		delete(sh.m, key)
+	} else {
+		l.items = out
+	}
+	return removed, nil
+}
+
 // LRange returns the elements in the inclusive index range [start, stop],
 // where negative indices count from the tail (Redis semantics).
 func (s *Store) LRange(key string, start, stop int) ([]string, error) {

@@ -63,6 +63,16 @@ func (c *conn) cmdSet(args []string) error {
 	return c.writeNull() // NX/XX condition not met
 }
 
+// cmdSetNX sets key to value only if it does not already exist, returning 1 on
+// write and 0 when the key is already present (of any type).
+func (c *conn) cmdSetNX(args []string) error {
+	if len(args) != 3 {
+		return c.wrongArgs("setnx")
+	}
+	ok := c.s.store.Set(args[1], args[2], store.SetOptions{NX: true})
+	return c.writeInt(boolToInt(ok))
+}
+
 func (c *conn) cmdGetSet(args []string) error {
 	if len(args) != 3 {
 		return c.wrongArgs("getset")

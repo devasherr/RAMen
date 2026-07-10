@@ -196,7 +196,7 @@ Open http://localhost:8080 in your browser while RAMen is running. You will see 
 
 ## Benchmarking
 
-- [Benchmarking Guide](docs/benchmarking.md)
+- [Benchmarking Guide](docs/benchmark.md)
 
 ## Configuration
 

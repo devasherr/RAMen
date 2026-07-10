@@ -21,13 +21,13 @@ This exposes:
 
 ```bash
 redis-benchmark -h localhost -p 6379 \
-  -t ping,set,get,incr,lpush,rpush,lpop,sadd,hset,spop,zadd,zpopmin
+  -t ping,set,get,incr,lpush,rpush,lpop,sadd,hset,zadd
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-docker run --rm redis redis-benchmark -h host.docker.internal -p 6379 -t ping,set,get,incr,lpush,rpush,lpop,sadd,hset,spop,zadd,zpopmin
+docker run --rm redis redis-benchmark -h host.docker.internal -p 6379 -t ping,set,get,incr,lpush,rpush,lpop,sadd,hset,zadd
 ```
 
 ## Notes

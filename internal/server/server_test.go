@@ -227,6 +227,28 @@ func TestHashIncrByFloatErrors(t *testing.T) {
 	mustError(t, cli, "HINCRBYFLOAT", "str", "field", "1.5")
 }
 
+func TestListSet(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	mustError(t, cli, "LSET", "l", "0", "x") // no such key
+	mustDo(t, cli, "RPUSH", "l", "a", "b", "c")
+	if r := mustDo(t, cli, "LSET", "l", "1", "B"); r != "OK" {
+		t.Fatalf("LSET = %v", r)
+	}
+	if r := mustDo(t, cli, "LINDEX", "l", "1"); r != "B" {
+		t.Fatalf("LSET did not update = %v", r)
+	}
+	if r := mustDo(t, cli, "LSET", "l", "-1", "C"); r != "OK" {
+		t.Fatalf("LSET negative index = %v", r)
+	}
+	mustError(t, cli, "LSET", "l", "3", "z")        // index out of range
+	mustError(t, cli, "LSET", "l", "notanint", "z") // bad index
+	mustError(t, cli, "LSET", "l")                  // arity
+	mustDo(t, cli, "SET", "str", "v")
+	mustError(t, cli, "LSET", "str", "0", "x") // wrong type
+}
+
 func TestVectorCommands(t *testing.T) {
 	cli, cleanup := startTestServer(t)
 	defer cleanup()

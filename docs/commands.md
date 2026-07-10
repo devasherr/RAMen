@@ -64,12 +64,13 @@ HGETALL user:1
 
 ## Lists
 
-`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LLEN`, `LINDEX`, `LRANGE`.
+`LPUSH`, `RPUSH`, `LPOP`, `RPOP`, `LLEN`, `LINDEX`, `LRANGE`, `LSET`.
 
 ```
 RPUSH q a b c
 LRANGE q 0 -1          # a b c
 LPOP q                 # a
+LSET q 0 A             # overwrite index 0 (errors if the key or index is missing)
 ```
 
 ## Sets

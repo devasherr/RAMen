@@ -222,3 +222,33 @@ func TestSnapshotRoundtrip(t *testing.T) {
 		t.Fatalf("vcard = %d", n)
 	}
 }
+
+func TestListSet(t *testing.T) {
+	s := New()
+	if err := s.LSet("l", 0, "x"); err != ErrNoSuchKey {
+		t.Fatalf("LSet missing key = %v", err)
+	}
+	s.RPush("l", "a", "b", "c")
+	if err := s.LSet("l", 1, "B"); err != nil {
+		t.Fatalf("LSet = %v", err)
+	}
+	if v, _, _ := s.LIndex("l", 1); v != "B" {
+		t.Fatalf("LSet did not update index 1 = %q", v)
+	}
+	if err := s.LSet("l", -1, "C"); err != nil {
+		t.Fatalf("LSet negative index = %v", err)
+	}
+	if v, _, _ := s.LIndex("l", 2); v != "C" {
+		t.Fatalf("LSet negative index did not update tail = %q", v)
+	}
+	if err := s.LSet("l", 3, "z"); err != ErrIndexOutOfRange {
+		t.Fatalf("LSet out of range = %v", err)
+	}
+	if err := s.LSet("l", -4, "z"); err != ErrIndexOutOfRange {
+		t.Fatalf("LSet negative out of range = %v", err)
+	}
+	s.Set("str", "value", SetOptions{})
+	if err := s.LSet("str", 0, "x"); err != ErrWrongType {
+		t.Fatalf("LSet wrong type = %v", err)
+	}
+}

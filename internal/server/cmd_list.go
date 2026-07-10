@@ -123,3 +123,18 @@ func (c *conn) cmdLRem(args []string) error {
 	}
 	return c.writeInt(int64(n))
 }
+
+func (c *conn) cmdLTrim(args []string) error {
+	if len(args) != 4 {
+		return c.wrongArgs("ltrim")
+	}
+	start, err1 := strconv.Atoi(args[2])
+	stop, err2 := strconv.Atoi(args[3])
+	if err1 != nil || err2 != nil {
+		return c.writeError("ERR value is not an integer or out of range")
+	}
+	if err := c.s.store.LTrim(args[1], start, stop); err != nil {
+		return c.storeErr(err)
+	}
+	return c.writeSimple("OK")
+}

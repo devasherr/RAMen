@@ -78,6 +78,7 @@ func (s *Server) registerCommands() {
 		"LRANGE": (*conn).cmdLRange,
 		"LSET":   (*conn).cmdLSet,
 		"LREM":   (*conn).cmdLRem,
+		"LTRIM":  (*conn).cmdLTrim,
 
 		// sets
 		"SADD":      (*conn).cmdSAdd,

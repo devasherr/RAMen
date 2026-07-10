@@ -1,6 +1,9 @@
 package server
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+)
 
 func (c *conn) cmdLPush(args []string) error { return c.push(args, "lpush", true) }
 func (c *conn) cmdRPush(args []string) error { return c.push(args, "rpush", false) }
@@ -137,4 +140,24 @@ func (c *conn) cmdLTrim(args []string) error {
 		return c.storeErr(err)
 	}
 	return c.writeSimple("OK")
+}
+
+func (c *conn) cmdLInsert(args []string) error {
+	if len(args) != 5 {
+		return c.wrongArgs("linsert")
+	}
+	var before bool
+	switch strings.ToUpper(args[2]) {
+	case "BEFORE":
+		before = true
+	case "AFTER":
+		before = false
+	default:
+		return c.writeError("ERR syntax error")
+	}
+	n, err := c.s.store.LInsert(args[1], before, args[3], args[4])
+	if err != nil {
+		return c.storeErr(err)
+	}
+	return c.writeInt(int64(n))
 }

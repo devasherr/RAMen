@@ -36,3 +36,12 @@ func (c *conn) cmdCopy(args []string) error {
 	}
 	return c.writeNull()
 }
+
+func (c *conn) cmdObjectEncoding(args []string) error {
+	if len(args) != 3 {
+		return c.wrongArgs("object encoding")
+	}
+
+	// currently behaves similar to `type` command because store doesn't use different internal representation
+	return c.writeSimple(c.s.store.Type(args[2]))
+}

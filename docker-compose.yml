@@ -1,0 +1,19 @@
+services:
+  ramen:
+    build:
+      context: .
+      args:
+        VERSION: docker
+
+    ports:
+      - "6379:6379"
+      - "8080:8080"
+
+    environment:
+      RAMEN_SNAPSHOT_PATH: /data/ramen.snapshot
+
+    volumes:
+      - ramen-data:/data
+
+volumes:
+  ramen-data:

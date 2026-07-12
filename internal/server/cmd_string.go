@@ -64,6 +64,38 @@ func (c *conn) cmdSet(args []string) error {
 	return c.writeNull() // NX/XX condition not met
 }
 
+// cmdSetNX sets key to value only if it does not already exist, returning 1 on
+// write and 0 when the key is already present (of any type).
+func (c *conn) cmdSetNX(args []string) error {
+	if len(args) != 3 {
+		return c.wrongArgs("setnx")
+	}
+	ok := c.s.store.Set(args[1], args[2], store.SetOptions{NX: true})
+	return c.writeInt(boolToInt(ok))
+}
+
+func (c *conn) cmdSetEx(args []string) error  { return c.setEx(args, "setex", time.Second) }
+func (c *conn) cmdPSetEx(args []string) error { return c.setEx(args, "psetex", time.Millisecond) }
+
+// setEx implements SETEX/PSETEX: an atomic set with a positive TTL, in seconds
+// or milliseconds depending on unit. Redis rejects a non-positive TTL.
+func (c *conn) setEx(args []string, name string, unit time.Duration) error {
+	if len(args) != 4 {
+		return c.wrongArgs(name)
+	}
+	n, err := strconv.ParseInt(args[2], 10, 64)
+	if err != nil {
+		return c.writeError(store.ErrNotInteger.Error())
+	}
+	// Reject a non-positive TTL, and one so large that n*unit would overflow
+	// time.Duration and wrap into the past (which would silently drop the key).
+	if n <= 0 || n > math.MaxInt64/int64(unit) {
+		return c.writeError("ERR invalid expire time in '" + name + "' command")
+	}
+	c.s.store.Set(args[1], args[3], store.SetOptions{TTL: time.Duration(n) * unit, HasEx: true})
+	return c.writeSimple("OK")
+}
+
 func (c *conn) cmdGetSet(args []string) error {
 	if len(args) != 3 {
 		return c.wrongArgs("getset")

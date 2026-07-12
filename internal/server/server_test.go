@@ -608,3 +608,73 @@ func TestExpireTime(t *testing.T) {
 	mustError(t, cli, "EXPIRETIME")           // arity: no key
 	mustError(t, cli, "EXPIRETIME", "k", "x") // arity: too many
 }
+
+func TestSetNX(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	if r := mustDo(t, cli, "SETNX", "k", "v1"); r != int64(1) {
+		t.Fatalf("SETNX new key = %v", r)
+	}
+	if r := mustDo(t, cli, "GET", "k"); r != "v1" {
+		t.Fatalf("GET after SETNX = %v", r)
+	}
+	if r := mustDo(t, cli, "SETNX", "k", "v2"); r != int64(0) {
+		t.Fatalf("SETNX existing key = %v", r)
+	}
+	if r := mustDo(t, cli, "GET", "k"); r != "v1" {
+		t.Fatalf("SETNX overwrote an existing key = %v", r)
+	}
+	// a key of another type still blocks SETNX
+	mustDo(t, cli, "RPUSH", "l", "a")
+	if r := mustDo(t, cli, "SETNX", "l", "v"); r != int64(0) {
+		t.Fatalf("SETNX on an existing list = %v", r)
+	}
+	mustError(t, cli, "SETNX", "k")           // arity: too few
+	mustError(t, cli, "SETNX", "k", "v", "x") // arity: too many
+}
+
+func TestSetEx(t *testing.T) {
+	cli, cleanup := startTestServer(t)
+	defer cleanup()
+
+	if r := mustDo(t, cli, "SETEX", "k", "100", "v"); r != "OK" {
+		t.Fatalf("SETEX = %v", r)
+	}
+	if r := mustDo(t, cli, "GET", "k"); r != "v" {
+		t.Fatalf("GET after SETEX = %v", r)
+	}
+	if r := mustDo(t, cli, "TTL", "k").(int64); r < 1 || r > 100 {
+		t.Fatalf("TTL after SETEX = %v, want 1..100", r)
+	}
+
+	if r := mustDo(t, cli, "PSETEX", "pk", "100000", "v"); r != "OK" {
+		t.Fatalf("PSETEX = %v", r)
+	}
+	if r := mustDo(t, cli, "TTL", "pk").(int64); r < 1 || r > 100 {
+		t.Fatalf("TTL after PSETEX = %v, want 1..100", r)
+	}
+
+	// SETEX overwrites the value and resets the TTL
+	mustDo(t, cli, "SET", "o", "old")
+	mustDo(t, cli, "SETEX", "o", "50", "new")
+	if r := mustDo(t, cli, "GET", "o"); r != "new" {
+		t.Fatalf("SETEX did not overwrite = %v", r)
+	}
+
+	// a non-positive TTL is rejected
+	mustError(t, cli, "SETEX", "k", "0", "v")
+	mustError(t, cli, "SETEX", "k", "-1", "v")
+	mustError(t, cli, "PSETEX", "k", "0", "v")
+	// non-integer TTL
+	mustError(t, cli, "SETEX", "k", "abc", "v")
+	// a TTL so large it would overflow time.Duration is rejected, not silently dropped
+	mustError(t, cli, "SETEX", "ovf", "10000000000", "v")
+	if r, _ := cli.Do("GET", "ovf"); r != nil {
+		t.Fatalf("SETEX overflow created a key = %v", r)
+	}
+	mustError(t, cli, "PSETEX", "ovf", "10000000000000", "v")
+	// arity
+	mustError(t, cli, "SETEX", "k", "10")
+	mustError(t, cli, "PSETEX", "k", "10")
+}

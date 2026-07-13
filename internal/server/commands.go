@@ -89,6 +89,7 @@ func (s *Server) registerCommands() {
 		"LREM":    (*conn).cmdLRem,
 		"LTRIM":   (*conn).cmdLTrim,
 		"LINSERT": (*conn).cmdLInsert,
+		"SORT":    (*conn).cmdSort,
 
 		// sets
 		"SADD":      (*conn).cmdSAdd,

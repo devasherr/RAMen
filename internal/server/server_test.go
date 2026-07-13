@@ -106,15 +106,30 @@ func TestDataStructures(t *testing.T) {
 	cli, cleanup := startTestServer(t)
 	defer cleanup()
 
-	mustDo(t, cli, "RPUSH", "l", "a", "b", "c")
-	if r := mustDo(t, cli, "LLEN", "l"); r != int64(3) {
+	mustDo(t, cli, "RPUSH", "nums", "4", "2", "3", "1")
+	if r := mustDo(t, cli, "LLEN", "nums"); r != int64(4) {
 		t.Fatalf("LLEN = %v", r)
 	}
-	r := mustDo(t, cli, "LRANGE", "l", "0", "-1").([]any)
-	if len(r) != 3 || r[0] != "a" || r[2] != "c" {
+	r := mustDo(t, cli, "LRANGE", "nums", "0", "-1").([]any)
+	if len(r) != 4 || r[0] != "4" || r[1] != "2" || r[2] != "3" || r[3] != "1" {
 		t.Fatalf("LRANGE = %v", r)
 	}
-
+	r = mustDo(t, cli, "SORT", "nums").([]any)
+	if len(r) != 4 || r[0] != "1" || r[1] != "2" || r[2] != "3" || r[3] != "4" {
+		t.Fatalf("SORT = %v", r)
+	}
+	r = mustDo(t, cli, "SORT", "nums", "DESC").([]any)
+	if len(r) != 4 || r[0] != "4" || r[1] != "3" || r[2] != "2" || r[3] != "1" {
+		t.Fatalf("SORT = %v", r)
+	}
+	r = mustDo(t, cli, "SORT", "nums", "DESC", "LIMIT", "0", "2").([]any)
+	if len(r) != 2 || r[0] != "4" || r[1] != "3" {
+		t.Fatalf("SORT = %v", r)
+	}
+	r = mustDo(t, cli, "SORT", "nums", "LIMIT", "0", "2", "DESC").([]any)
+	if len(r) != 2 || r[0] != "4" || r[1] != "3" {
+		t.Fatalf("SORT = %v", r)
+	}
 	mustDo(t, cli, "HSET", "h", "f1", "v1", "f2", "v2")
 	if r := mustDo(t, cli, "HGET", "h", "f1"); r != "v1" {
 		t.Fatalf("HGET = %v", r)

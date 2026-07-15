@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -58,11 +59,29 @@ func orderSortArgs(args []string) []string {
 			continue
 		}
 
-		res = append(res, arg)
+		res = append(res, strings.ToUpper(arg))
 	}
 
 	if hasDesc {
 		res = append([]string{"DESC"}, res...)
+	}
+	return res
+}
+
+func checkArray(vals []string) bool {
+	for _, val := range vals {
+		_, err := strconv.ParseFloat(val, 64)
+		if err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+func numsToString(nums []float64) []string {
+	res := []string{}
+	for _, num := range nums {
+		res = append(res, strconv.FormatFloat(num, 'f', -1, 64))
 	}
 	return res
 }
@@ -77,41 +96,62 @@ func (c *conn) cmdSort(args []string) error {
 		return c.storeErr(err)
 	}
 
-	slices.Sort(items)
-	if len(args) < 3 {
-		return c.writeStringArray(items)
-	}
+	// since default sort is by number all item values have to be a number
+	numSortable := checkArray(items)
 
 	// order of execution for the args matters even though order layout maybe unordered
 	// example: LIMIT start end DESC output is actually DESC LIMIT start end
 	args = orderSortArgs(args[2:])
 
-	for i := 0; i < len(args); i++ {
+	isAlpha := slices.Contains(args, "ALPHA")
+	if numSortable && !isAlpha {
+		// only for internal purpose
+		args = append([]string{"NUMERIC"}, args...)
+	}
 
-		switch strings.ToUpper(args[i]) {
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "NUMERIC":
+			nums := []float64{}
+			for _, val := range items {
+				n, _ := strconv.ParseFloat(val, 64)
+				nums = append(nums, n)
+			}
+
+			sort.Slice(nums, func(i, j int) bool {
+				return nums[i] < nums[j]
+			})
+
+			items = numsToString(nums)
+		case "ALPHA":
+			slices.Sort(items)
 		case "DESC":
 			slices.Reverse(items)
 		case "LIMIT":
 			if i+2 >= len(args) {
 				return c.wrongArgs("sort limit")
 			}
-			start, err := strconv.Atoi(args[i+1])
+			offset, err := strconv.Atoi(args[i+1])
 			if err != nil {
-				c.writeError("invalid limit index " + args[i+1])
+				return c.writeError("invalid limit index " + args[i+1])
 			}
-			end, err := strconv.Atoi(args[i+2])
+			count, err := strconv.Atoi(args[i+2])
 			if err != nil {
-				c.writeError("invalid limit index " + args[i+2])
+				return c.writeError("invalid limit index " + args[i+2])
 			}
 
-			if end == -1 {
-				end = len(items)
-			}
+			if offset >= len(items) {
+				items = nil
+			} else {
+				if count < 0 {
+					count = len(items) - offset
+				}
 
-			items = items[start:end]
+				end := min(offset+count, len(items))
+				items = items[offset:end]
+			}
 			i += 2
 		case "ASC":
-		case "ALPHA":
 		default:
 			return c.writeError(fmt.Sprintf("syntax error, %s", strings.ToUpper(args[i])))
 		}
